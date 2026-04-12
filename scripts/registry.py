@@ -43,6 +43,8 @@ class Layout:
     variant: str
     description: str
     extra: dict[str, Any]
+    iso639: tuple[str]
+    iso3166: tuple[str]
 
     @classmethod
     def parse(cls, raw: dict[str, str]) -> Layout:
@@ -54,6 +56,8 @@ class Layout:
             variant=raw.get("variant", ""),
             description=raw.get("description", ""),
             extra={},
+            iso639=raw.get("iso639", ()),
+            iso3166=raw.get("iso3166", ()),
         )
 
 
