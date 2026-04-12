@@ -86,6 +86,7 @@ xkb_keymap_format = c_int
 xkb_keycode_t = c_uint32
 xkb_keysym_t = c_uint32
 xkb_mod_index_t = c_uint32
+xkb_mod_mask_t = c_uint32
 xkb_led_index_t = c_uint32
 xkb_level_index_t = c_uint32
 xkb_layout_index_t = c_uint32
@@ -155,6 +156,12 @@ else:
 xkbcommon.xkb_keysym_from_name.argtypes = [c_char_p, xkb_keysym_flags]
 xkbcommon.xkb_keysym_from_name.restype = xkb_keysym_t
 
+xkbcommon.xkb_keysym_get_name.argtypes = [xkb_keysym_t, c_char_p, c_size_t]
+xkbcommon.xkb_keysym_get_name.restype = c_int
+
+xkbcommon.xkb_keysym_to_utf8.argtypes = [xkb_keysym_t, c_char_p, c_size_t]
+xkbcommon.xkb_keysym_to_utf8.restype = c_int
+
 xkbcommon.xkb_context_new.argtypes = [xkb_context_flags]
 xkbcommon.xkb_context_new.restype = POINTER(xkb_context)
 
@@ -164,6 +171,9 @@ xkbcommon.xkb_keymap_new_from_names.argtypes = [
     xkb_keymap_compile_flags,
 ]
 xkbcommon.xkb_keymap_new_from_names.restype = POINTER(xkb_keymap)
+
+xkbcommon.xkb_keymap_key_get_name.argtypes = [POINTER(xkb_keymap), xkb_keycode_t]
+xkbcommon.xkb_keymap_key_get_name.restype = c_char_p
 
 xkbcommon.xkb_keymap_key_by_name.argtypes = [POINTER(xkb_keymap), c_char_p]
 xkbcommon.xkb_keymap_key_by_name.restype = xkb_keycode_t
@@ -189,6 +199,16 @@ xkbcommon.xkb_keymap_num_levels_for_key.argtypes = [
 ]
 xkbcommon.xkb_keymap_num_levels_for_key.restype = xkb_level_index_t
 
+xkbcommon.xkb_keymap_key_get_mods_for_level.argtypes = [
+    xkb_keymap_p,
+    xkb_keycode_t,
+    xkb_layout_index_t,
+    xkb_level_index_t,
+    POINTER(xkb_mod_mask_t),
+    c_size_t,
+]
+xkbcommon.xkb_keymap_key_get_mods_for_level.restype = c_size_t
+
 xkbcommon.xkb_keymap_key_get_syms_by_level.argtypes = [
     xkb_keymap_p,
     xkb_keycode_t,
@@ -199,22 +219,48 @@ xkbcommon.xkb_keymap_key_get_syms_by_level.argtypes = [
 xkbcommon.xkb_keymap_key_get_syms_by_level.restype = c_int
 
 xkbcommon.xkb_state_new.argtypes = [POINTER(xkb_keymap)]
-xkbcommon.xkb_state_new.restype = POINTER(xkb_state)
+xkbcommon.xkb_state_new.restype = xkb_state_p
 
-xkbcommon.xkb_state_get_keymap.argtypes = [POINTER(xkb_state)]
+xkbcommon.xkb_state_get_keymap.argtypes = [xkb_state_p]
 xkbcommon.xkb_state_get_keymap.restype = POINTER(xkb_keymap)
 
-xkbcommon.xkb_state_key_get_one_sym.argtypes = [POINTER(xkb_state), xkb_keycode_t]
+xkbcommon.xkb_state_update_mask.argtypes = [
+    xkb_state_p,
+    xkb_mod_mask_t,
+    xkb_mod_mask_t,
+    xkb_mod_mask_t,
+    xkb_layout_index_t,
+    xkb_layout_index_t,
+    xkb_layout_index_t,
+]
+xkbcommon.xkb_state_update_mask.restype = xkb_state_component
+
+xkbcommon.xkb_state_key_get_syms.argtypes = [
+    xkb_state_p,
+    xkb_keycode_t,
+    POINTER(POINTER(xkb_keysym_t)),
+]
+xkbcommon.xkb_state_key_get_syms.restype = c_int
+
+xkbcommon.xkb_state_key_get_one_sym.argtypes = [xkb_state_p, xkb_keycode_t]
 xkbcommon.xkb_state_key_get_one_sym.restype = xkb_keysym_t
+
+xkbcommon.xkb_state_key_get_utf8.argtypes = [
+    xkb_state_p,
+    xkb_keycode_t,
+    c_char_p,
+    c_size_t,
+]
+xkbcommon.xkb_state_key_get_utf8.restype = c_int
 
 xkbcommon.xkb_keymap_led_get_name.argtypes = [POINTER(xkb_keymap), xkb_led_index_t]
 xkbcommon.xkb_keymap_led_get_name.restype = c_char_p
 
-xkbcommon.xkb_state_key_get_layout.argtypes = [POINTER(xkb_state), xkb_keycode_t]
+xkbcommon.xkb_state_key_get_layout.argtypes = [xkb_state_p, xkb_keycode_t]
 xkbcommon.xkb_state_key_get_layout.restype = xkb_layout_index_t
 
 xkbcommon.xkb_state_key_get_level.argtypes = [
-    POINTER(xkb_state),
+    xkb_state_p,
     xkb_keycode_t,
     xkb_layout_index_t,
 ]
@@ -230,14 +276,14 @@ xkbcommon.xkb_keymap_mod_get_index.argtypes = [POINTER(xkb_keymap), c_char_p]
 xkbcommon.xkb_keymap_mod_get_index.restype = xkb_mod_index_t
 
 xkbcommon.xkb_state_mod_index_is_active.argtypes = [
-    POINTER(xkb_state),
+    xkb_state_p,
     xkb_mod_index_t,
     xkb_state_component,
 ]
 xkbcommon.xkb_state_mod_index_is_active.restype = c_int
 
 xkbcommon.xkb_state_mod_index_is_consumed2.argtypes = [
-    POINTER(xkb_state),
+    xkb_state_p,
     xkb_keycode_t,
     xkb_mod_index_t,
     xkb_consumed_mode,
@@ -247,7 +293,7 @@ xkbcommon.xkb_state_mod_index_is_consumed2.restype = c_int
 xkbcommon.xkb_keymap_num_leds.argtypes = [POINTER(xkb_keymap)]
 xkbcommon.xkb_keymap_num_leds.restype = xkb_led_index_t
 
-xkbcommon.xkb_state_led_index_is_active.argtypes = [POINTER(xkb_state), xkb_led_index_t]
+xkbcommon.xkb_state_led_index_is_active.argtypes = [xkb_state_p, xkb_led_index_t]
 xkbcommon.xkb_state_led_index_is_active.restype = c_int
 
 if libc_path := find_library("c"):
@@ -317,6 +363,17 @@ def xkb_keymap_num_levels_for_key(
     return xkbcommon.xkb_keymap_num_levels_for_key(keymap, keycode, layout)
 
 
+def xkb_keymap_key_get_mods_for_level(
+    keymap: xkb_keymap_p, keycode: int, layout: int, level: int
+) -> tuple[xkb_mod_mask_t]:
+    size_in = 10
+    mods = (xkb_mod_mask_t * size_in)()
+    size_out = xkbcommon.xkb_keymap_key_get_mods_for_level(
+        keymap, keycode, layout, level, mods, size_in
+    )
+    return tuple(mods)[:size_out]
+
+
 def xkb_keymap_key_get_syms_by_level(
     keymap: xkb_keymap_p, keycode: int, layout: int, level: int
 ) -> tuple[int, ...]:
@@ -345,6 +402,26 @@ def init_state(
 ) -> xkb_state_p:
     keymap = load_keymap(xkeyboard_config_paths, rules, model, layout, variant, options)
     return new_state(keymap)
+
+
+def xkb_state_update_mask(
+    state: xkb_state_p,
+    depressed_mods: ModifierMask,
+    latched_mods: ModifierMask,
+    locked_mods: ModifierMask,
+    depressed_layout: int,
+    latched_layout: int,
+    locked_layout: int,
+):
+    return xkbcommon.xkb_state_update_mask(
+        state,
+        depressed_mods,
+        latched_mods,
+        locked_mods,
+        depressed_layout,
+        latched_layout,
+        locked_layout,
+    )
 
 
 def unref_state(state: xkb_state_p) -> None:
@@ -387,6 +464,10 @@ def xkb_keymap_led_get_name(keymap: xkb_keymap_p, led: int) -> str:
     return xkbcommon.xkb_keymap_led_get_name(keymap, led).decode("utf-8")
 
 
+def xkb_keymap_key_get_name(keymap: xkb_keymap_p, keycode: int) -> str:
+    return xkbcommon.xkb_keymap_key_get_name(keymap, keycode).decode("utf-8")
+
+
 def xkb_keysym_from_name(name: str) -> int:
     return xkbcommon.xkb_keysym_from_name(name.encode("utf-8"), XKB_KEYSYM_NO_FLAGS)
 
@@ -401,6 +482,25 @@ def xkb_keysym_get_name(keysym: int) -> str:
         raise ValueError(f"Truncated: expected {buf_len}, got: {n + 1}.")
     else:
         raise ValueError(f"Unsupported keysym: {keysym}")
+
+
+def xkb_keysym_to_utf8(keysym: int) -> str:
+    buf_len = 8
+    buf = create_string_buffer(buf_len)
+    n = xkbcommon.xkb_keysym_to_utf8(keysym, buf, c_size_t(buf_len))
+    if n >= buf_len:
+        raise ValueError(f"Truncated: expected {buf_len}, got: {n + 1}.")
+    else:
+        return buf.value.decode("utf-8")
+
+
+def xkb_state_key_get_syms(state: xkb_state_p, key: int) -> tuple[int, ...]:
+    keysyms = POINTER(xkb_keysym_t)()
+    count = xkbcommon.xkb_state_key_get_syms(state, key, byref(keysyms))
+    if count <= 0:
+        return ()
+    else:
+        return tuple(keysyms[k] for k in range(count))
 
 
 def xkb_state_key_get_utf8(state: xkb_state_p, key: int) -> str:
@@ -526,7 +626,9 @@ class KeyLevel:
     keycode: int
     group: int
     level: int
+    masks: tuple[int, ...]
     keysyms: tuple[int, ...]
+    utf8: str
 
 
 class ForeignKeymap:
@@ -606,15 +708,75 @@ class ForeignKeymap:
             max_levels = xkb_keymap_num_levels_for_key(keymap, keycode, g)
             for l in range(0, max_levels):
                 keysyms = xkb_keymap_key_get_syms_by_level(keymap, keycode, g, l)
-                result.append(KeyLevel(keycode, g, l, keysyms))
+                utf8 = "".join(xkb_keysym_to_utf8(ks) for ks in keysyms)
+                masks = xkb_keymap_key_get_mods_for_level(keymap, keycode, g, l)
+                result.append(
+                    KeyLevel(
+                        keycode=keycode,
+                        group=g,
+                        level=l,
+                        masks=masks,
+                        keysyms=keysyms,
+                        utf8=utf8,
+                    )
+                )
 
     @classmethod
-    def get_keys_levels(cls, keymap: xkb_keymap_p) -> list[KeyLevel]:
+    def __iter_key_levels(
+        cls,
+        state: State,
+        masks: tuple[ModifierMask, ...],
+        result: list[KeyLevel],
+        keymap: xkb_keymap_p,
+        keycode: int,
+        data: c_void_p,
+    ):
+        """
+        Given a keymap and a keycode, iterate over its groups and levels and
+        append its outputs to a list of results.
+        """
+        max_groups = xkb_keymap_num_layouts_for_key(keymap, keycode)
+        for g in range(0, max_groups):
+            for mask in masks:
+                state.update_mask(
+                    depressed_mods=mask,
+                    latched_mods=0,
+                    locked_mods=0,
+                    depressed_layout=0,
+                    latched_layout=0,
+                    locked_layout=g,
+                )
+                keysyms = xkb_state_key_get_syms(state._state, keycode)
+                utf8 = xkb_state_key_get_utf8(state._state, keycode)
+                # FIXME: level
+                result.append(
+                    KeyLevel(
+                        keycode=keycode,
+                        group=g,
+                        level=mask.value,
+                        masks=(mask.value,),
+                        keysyms=keysyms,
+                        utf8=utf8,
+                    )
+                )
+
+    @classmethod
+    def get_keys_levels(
+        cls, keymap: xkb_keymap_p, *mod_masks: ModifierMask
+    ) -> list[KeyLevel]:
         """
         Given a keymap, get the list of outputs for each key, group and level.
         """
         result: list[KeyLevel] = []
-        xkb_keymap_key_for_each(keymap, partial(cls.__iter_key, result), c_void_p())
+        if mod_masks:
+            with ForeignState(keymap) as state:
+                xkb_keymap_key_for_each(
+                    keymap,
+                    partial(cls.__iter_key_levels, state, mod_masks, result),
+                    c_void_p(),
+                )
+        else:
+            xkb_keymap_key_for_each(keymap, partial(cls.__iter_key, result), c_void_p())
         return result
 
 
@@ -631,6 +793,25 @@ class State:
     def process_key_event(self, key: str, direction: xkb_key_direction) -> Result:
         return process_key_event(self._state, key, direction)
 
+    def update_mask(
+        self,
+        depressed_mods: ModifierMask,
+        latched_mods: ModifierMask,
+        locked_mods: ModifierMask,
+        depressed_layout: int,
+        latched_layout: int,
+        locked_layout: int,
+    ) -> xkb_state_component:
+        return xkb_state_update_mask(
+            self._state,
+            depressed_mods,
+            latched_mods,
+            locked_mods,
+            depressed_layout,
+            latched_layout,
+            locked_layout,
+        )
+
 
 class ForeignState:
     """
@@ -641,7 +822,7 @@ class ForeignState:
 
     def __init__(self, keymap: xkb_keymap_p):
         self._keymap = keymap
-        self._state = POINTER(xkb_state)()  # NULL pointer
+        self._state = xkb_state_p()  # NULL pointer
 
     def __enter__(self) -> State:
         self._state = new_state(self._keymap)
