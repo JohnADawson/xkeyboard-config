@@ -104,6 +104,42 @@
 - [ ] Edit the release to add a link to the announcement email
   from the xorg-announce@lists.x.org mailing list archive.
 
+#### Update the website
+
+Website is in a separate repository: <https://gitlab.freedesktop.org/xkeyboard-config/website>.
+
+- [ ] Create a release branch: `git checkout -b release/MAJOR.MINOR main`.
+
+- [ ] Create `doc/content/blog/<YYYY-MM-DD>-<MAJOR.MINOR>-release.md` and fill it with the corresponding release notes.
+
+- [ ] Move `aliases = ["blog/latest-release"]` from the header of the previous release notes to the newest notes.
+
+- [ ] Export the keymaps:
+
+  ```shell
+  pushd xkeyboard-config
+  meson setup -C build --prefix "$PWD/inst"
+  meson install -C build
+  ./scripts/export-keymaps.py --xkb-root "$PWD/inst/share/xkeyboard-config-2" \
+                              --rules evdev keymaps | \
+      gzip -k -9 --stdout > \
+                 ../xkeyboard-config-website/doc/static/data/keymaps.json.gz
+  ```
+
+- [ ] Bump  `extra.xkc.latest_version` in `doc/config.toml`.
+
+- [ ] Test locally:
+
+  ```bash
+  pushd doc
+  zola serve --output-dir /tmp/public --force --open`
+  ```
+
+- [ ] Create a pull request and ensure *all* CI is green.
+
+- [ ] Merge the pull request: the deployement to <https://xkeyboard-config.freedesktop.org/>
+  is automatic.
+
 #### Send announcement email to xorg-announce
 
 - [ ] Send an email to the xorg-announce@lists.x.org mailing list, using this template:
