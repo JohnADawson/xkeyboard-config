@@ -91,6 +91,19 @@
 
 - [ ] Push the tag `git push origin xkeyboard-config-<MAJOR.MINOR>`.
 
+- [ ] Create a Gitlab release:
+
+  1. [Go to the new release page](https://gitlab.freedesktop.org/xkeyboard-config/xkeyboard-config/-/releases/new).
+  2. Select the newly created tag.
+  3. Leave the “Release title” field blank.
+  4. Select the corresponding milestone.
+  5. Select the date that the tag was pushed.
+  6. Leave the “Release notes” field blank.
+  7. Add the link to the corresponding (future) blog post.
+
+- [ ] Edit the release to add a link to the announcement email
+  from the xorg-announce@lists.x.org mailing list archive.
+
 #### Send announcement email to xorg-announce
 
 - [ ] Send an email to the xorg-announce@lists.x.org mailing list, using this template:
@@ -105,6 +118,11 @@ Git tag:
 
 git tag: xkeyboard-config-<MAJOR.MINOR>
 git commit: <git commit sha>
+
+Tarballs:
+---------
+
+https://gitlab.freedesktop.org/xkeyboard-config/xkeyboard-config/-/releases/xkeyboard-config-MAJOR.MINOR
 
 <YOUR NAME>
 ```
